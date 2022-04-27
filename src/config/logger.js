@@ -1,6 +1,6 @@
 import { transports, createLogger, format } from "winston";
 
-export default createLogger({
+export const loggerOptions = {
   level: "info",
   format: format.combine(format.timestamp(), format.json()),
   defaultMeta: { service: "node-template" },
@@ -9,4 +9,6 @@ export default createLogger({
     new transports.File({ filename: "error.log", level: "error" }),
     new transports.File({ filename: "node-template.log" }),
   ],
-});
+};
+
+export default createLogger(loggerOptions);

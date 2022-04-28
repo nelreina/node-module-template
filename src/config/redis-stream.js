@@ -2,7 +2,6 @@ import { client } from "./redis-client.js";
 import logger from "../config/logger.js";
 
 const BLOCK = 10000;
-const COUNT = 1;
 
 const createGroup = async (key, group) => {
   try {
@@ -37,7 +36,7 @@ const createConsumer = async (key, group, consumer) => {
   }
 };
 
-export default async (key, group, consumer) => {
+export default async (key, group, consumer, ack = true) => {
   const groupOK = await createGroup(key, group);
   if (!groupOK) return {};
   const consumerOK = await createConsumer(key, group, consumer);
@@ -46,21 +45,24 @@ export default async (key, group, consumer) => {
   await streamClient.connect();
 
   // Start listen to stream
-  const listen = async () => {
+  const listen = async (streamHandler) => {
     const messages = await streamClient.xReadGroup(
       group,
       consumer,
       { key, id: ">" },
-      { BLOCK, COUNT }
+      { BLOCK, COUNT: 1 }
     );
     if (messages) {
-      console.log(
-        "LOG:  ~ file: redis-stream.js ~ line 55 ~ listen ~ messages",
-        JSON.stringify(messages[0], null, 2)
-      );
-      listen();
+      const msg = messages[0];
+      const [payload] = msg.messages;
+      await streamHandler(payload);
+      if (ack) {
+        const resp = await streamClient.xAck(key, group, payload.id);
+      }
+
+      listen(streamHandler);
     } else {
-      listen();
+      listen(streamHandler);
     }
   };
   return { listen };

@@ -1,10 +1,10 @@
 // Generated project node-template
 import "dotenv/config";
 import minimist from "minimist";
+import Stream from "@nelreina/redis-stream-consumer";
 
 import { client } from "./config/redis-client.js";
 import logger from "./config/logger.js";
-import Stream from "./config/redis-stream.js";
 import server from "./config/server.js";
 
 import OS from "os";
@@ -24,10 +24,12 @@ try {
     logger.info("CONSUMER_GROUP: " + CONSUMER_GROUP);
     logger.info("CONSUMER_NAME: " + CONSUMER_NAME);
     logger.info("Successfully connected to redis");
-    const stream = await Stream(STREAM, CONSUMER_GROUP, CONSUMER_NAME);
+    const stream = await Stream(client, STREAM, CONSUMER_GROUP, {}, logger);
+
+    const streamCallback = (msg) => logger.info(JSON.stringify(msg));
 
     if (stream.listen) {
-      stream.listen();
+      stream.listen(streamCallback);
     }
 
     await server.listen(PORT);

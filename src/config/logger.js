@@ -1,14 +1,9 @@
-import { transports, createLogger, format } from "winston";
+import pino from "pino";
+import pretty from "pino-pretty";
 
-export const loggerOptions = {
-  level: "info",
-  format: format.combine(format.timestamp(), format.json()),
-  defaultMeta: { service: "node-template" },
-  transports: [
-    new transports.Console(),
-    new transports.File({ filename: "error.log", level: "error" }),
-    new transports.File({ filename: "node-template.log" }),
-  ],
-};
+export const loggerOptions = pretty({
+  colorize: true,
+  translateTime: true,
+});
 
-export default createLogger(loggerOptions);
+export default pino(loggerOptions);
